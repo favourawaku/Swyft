@@ -79,6 +79,12 @@ export async function getPosition({
   const retval = await callContract(rpcUrl, positionNftId, 'get_position');
   const raw = assertRawObject(scValToNative(retval), positionNftId);
 
+  // Contract may return void/null when the position does not exist
+  if (retval.switch().name === 'scvVoid') return null;
+
+  const raw = scValToNative(retval) as Record<string, unknown>;
+  if (!raw || typeof raw !== 'object') return null;
+
   return {
     positionNftId,
     owner: String(raw['owner'] ?? ''),
