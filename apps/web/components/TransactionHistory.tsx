@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useSwaps, SwapSnapshot } from "@/hooks/useSwaps";
-import { useLpActivity, LpActivity } from "@/hooks/useLpActivity";
+import { useLpActivity, LpActivity, LpActivityType } from "@/hooks/useLpActivity";
 import { SWYFT_NETWORK } from "@/lib/constants";
 
 type Tab = "swaps" | "lp";
@@ -36,16 +36,16 @@ export function TransactionHistory({ walletAddress }: TransactionHistoryProps) {
     return items.filter((item) => item.timestamp >= startTime && item.timestamp <= endTime);
   }
 
-  function getExplorerUrl(txHash: string) {
+  function getExplorerUrl(txHash: string): string {
     const network = SWYFT_NETWORK.toLowerCase();
     return `https://stellar.expert/explorer/${network}/tx/${txHash}`;
   }
 
-  function formatDate(timestamp: number) {
+  function formatDate(timestamp: number): string {
     return new Date(timestamp * 1000).toLocaleString();
   }
 
-  function truncateHash(hash: string) {
+  function truncateHash(hash: string): string {
     return `${hash.slice(0, 8)}...${hash.slice(-8)}`;
   }
 

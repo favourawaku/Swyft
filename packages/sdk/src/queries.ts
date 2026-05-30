@@ -1,6 +1,13 @@
 import { SorobanRpc, Contract, xdr, scValToNative, Transaction, FeeBumpTransaction } from '@stellar/stellar-sdk';
 import { PoolState, PositionState, TickState, SwyftRpcError } from './types';
 
+/**
+ * Explanatory copy for empty position state.
+ * Used by the UI layer when no positions are found.
+ */
+export const EMPTY_POSITION_MESSAGE =
+  'No positions found. Make a deposit to get started.';
+
 async function callContract(
   rpcUrl: string,
   contractAddress: string,
