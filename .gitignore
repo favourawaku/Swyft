@@ -22,9 +22,10 @@ coverage/
 *.snap
 __snapshots__/
 .nyc_output/
-*.test-results/
+junit.xml
 test-results/
 playwright-report/
+*.lcov
 
 # logs
 *.log
@@ -50,6 +51,6 @@ Cargo.lock
 *.wasm
 target/
 
-# package manager lockfiles (root — per-package locks are kept)
+# package manager lock files (keep pnpm-lock.yaml, ignore others)
 package-lock.json
 yarn.lock
