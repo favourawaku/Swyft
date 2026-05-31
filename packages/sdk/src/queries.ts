@@ -84,30 +84,27 @@ export async function getPosition({
 }): Promise<PositionState> {
   // positionNftId is the NFT contract address that holds the position
   const retval = await callContract(rpcUrl, positionNftId, 'get_position');
-  const raw = assertRawObject(scValToNative(retval), positionNftId);
 
   // Contract may return void/null when the position does not exist
-  if (retval.switch().name === 'scvVoid') return null;
+  if (retval.switch().name === 'scvVoid') {
+    throw new SwyftRpcError(`Position is empty (token not found) on ${positionNftId}`);
+  }
 
-  const raw = scValToNative(retval) as Record<string, unknown>;
-  if (!raw || typeof raw !== 'object') return null;
+  const raw = assertRawObject(scValToNative(retval), positionNftId);
 
   // If the decoder yields an empty object, treat it as Option::None.
-  if (Object.keys(raw as Record<string, unknown>).length === 0) {
+  if (Object.keys(raw).length === 0) {
     throw new SwyftRpcError(`Position is empty (token not found) on ${positionNftId}`);
   }
 
   // Handle potential option-like wrappers: { value: null }
-  const maybeValue = (raw as Record<string, unknown>)['value'];
-  if ('value' in (raw as Record<string, unknown>) && maybeValue == null) {
+  const maybeValue = raw['value'];
+  if ('value' in raw && maybeValue == null) {
     throw new SwyftRpcError(`Position is empty (token not found) on ${positionNftId}`);
   }
 
   // If wrapped as { value: PositionMetadata }, unwrap it.
-  const position =
-    'value' in (raw as Record<string, unknown>)
-      ? ((raw as Record<string, unknown>)['value'] ?? raw)
-      : raw;
+  const position = 'value' in raw ? (raw['value'] ?? raw) : raw;
 
   return {
     positionNftId,
@@ -125,6 +122,22 @@ export async function getPosition({
     ),
     liquidity: String((position as Record<string, unknown>)['liquidity'] ?? '0'),
   };
+}
+
+/**
+ * Async position query helper that yields a microtask before resolving.
+ * This is useful for UI consumers that want to show a loading state while the
+ * query is in-flight.
+ */
+export async function getPositionWithLoading({
+  rpcUrl,
+  positionNftId,
+}: {
+  rpcUrl: string;
+  positionNftId: string;
+}): Promise<PositionState> {
+  await Promise.resolve();
+  return getPosition({ rpcUrl, positionNftId });
 }
 
 export async function getTick({
