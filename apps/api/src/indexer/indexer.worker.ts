@@ -17,15 +17,14 @@ export class IndexerWorker implements OnModuleInit, OnModuleDestroy {
   private readonly prisma = new PrismaClient();
   private readonly workers: Worker[] = [];
   private readonly queueEvents: QueueEvents[] = [];
-  private _isReady = false;
+  private _isLoading = false;
 
-  get isReady(): boolean {
-    return this._isReady;
+  get isLoading(): boolean {
+    return this._isLoading;
   }
 
-  onModuleInit() {
-    this.logger.log('Indexer workers initializing…');
-
+  async onModuleInit() {
+    this._isLoading = true;
     const connection = makeQueueOptions().connection;
 
     this.workers.push(
@@ -57,6 +56,7 @@ export class IndexerWorker implements OnModuleInit, OnModuleDestroy {
     this._isReady = true;
     this.logger.log('Indexer workers ready');
     void this.logQueueDepths();
+    this._isLoading = false;
     setInterval(() => void this.logQueueDepths(), 60_000);
   }
 
@@ -66,6 +66,7 @@ export class IndexerWorker implements OnModuleInit, OnModuleDestroy {
       ...this.queueEvents.map((qe) => qe.close()),
     ]);
     await this.prisma.$disconnect();
+    this._isLoading = false;
     this.logger.log('Indexer workers shut down gracefully');
   }
 

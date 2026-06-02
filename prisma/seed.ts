@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -45,39 +45,41 @@ class Spinner {
 export async function main() {
   const spinner = new Spinner();
 
-  // ── Tokens ────────────────────────────────────────────────────────────────
-  spinner.start('Seeding tokens…');
-  const token0 = await prisma.token.upsert({
-    where: { address: 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN' },
-    update: {},
-    create: {
+  try {
+    // ── Tokens ──────────────────────────────────────────────────────────────
+    spinner.start('Seeding tokens…');
+    const token0Data: Prisma.TokenCreateInput = {
       address: 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN',
       symbol: 'USDC',
       name: 'USD Coin',
       decimals: 6,
       logoUri: 'https://example.com/usdc.png',
-    },
-  });
+    };
 
-  const token1 = await prisma.token.upsert({
-    where: { address: 'GBDEVU63Y6NTHJQQZIKVTC23NWLQVP3WJ2RI2OTSJTNYOIGICST6DUXR' },
-    update: {},
-    create: {
+    const token0 = await prisma.token.upsert({
+      where: { address: token0Data.address },
+      update: {},
+      create: token0Data,
+    });
+
+    const token1Data: Prisma.TokenCreateInput = {
       address: 'GBDEVU63Y6NTHJQQZIKVTC23NWLQVP3WJ2RI2OTSJTNYOIGICST6DUXR',
       symbol: 'XLM',
       name: 'Stellar Lumens',
       decimals: 7,
       logoUri: 'https://example.com/xlm.png',
-    },
-  });
-  spinner.stop(true, `Tokens seeded  (${token0.symbol}, ${token1.symbol})`);
+    };
 
-  // ── Pool ──────────────────────────────────────────────────────────────────
-  spinner.start('Seeding pool…');
-  const pool = await prisma.pool.upsert({
-    where: { id: 'test-pool-1' },
-    update: {},
-    create: {
+    const token1 = await prisma.token.upsert({
+      where: { address: token1Data.address },
+      update: {},
+      create: token1Data,
+    });
+    spinner.stop(true, `Tokens seeded  (${token0.symbol}, ${token1.symbol})`);
+
+    // ── Pool ────────────────────────────────────────────────────────────────
+    spinner.start('Seeding pool…');
+    const poolData: Prisma.PoolCreateInput = {
       id: 'test-pool-1',
       token0Address: token0.address,
       token1Address: token1.address,
@@ -88,16 +90,18 @@ export async function main() {
       tvl: '2000000000',
       volume24h: '100000000',
       feeApr: '0.05',
-    },
-  });
-  spinner.stop(true, `Pool seeded    (${pool.id})`);
+    };
 
-  // ── Position ──────────────────────────────────────────────────────────────
-  spinner.start('Seeding position…');
-  await prisma.position.upsert({
-    where: { id: 'test-position-1' },
-    update: {},
-    create: {
+    const pool = await prisma.pool.upsert({
+      where: { id: poolData.id },
+      update: {},
+      create: poolData,
+    });
+    spinner.stop(true, `Pool seeded    (${pool.id})`);
+
+    // ── Position ────────────────────────────────────────────────────────────
+    spinner.start('Seeding position…');
+    const positionData: Prisma.PositionCreateInput = {
       id: 'test-position-1',
       poolId: pool.id,
       ownerAddress: 'GCEZWKCA5VLDNRLN3RPRJMRZOX3Z6G5CHCGSNFHEYVXM3XOJMDS674JZ',
@@ -107,14 +111,18 @@ export async function main() {
       liquidity: '1000000000000000000',
       feesCollected0: '0',
       feesCollected1: '0',
-    },
-  });
-  spinner.stop(true, 'Position seeded (test-position-1)');
+    };
 
-  // ── Swaps ─────────────────────────────────────────────────────────────────
-  spinner.start('Seeding swaps…');
-  await prisma.swap.createMany({
-    data: [
+    await prisma.position.upsert({
+      where: { id: positionData.id },
+      update: {},
+      create: positionData,
+    });
+    spinner.stop(true, 'Position seeded (test-position-1)');
+
+    // ── Swaps ────────────────────────────────────────────────────────────────
+    spinner.start('Seeding swaps…');
+    const swapData: Prisma.SwapCreateManyInput[] = [
       {
         poolId: pool.id,
         senderAddress: 'GCEZWKCA5VLDNRLN3RPRJMRZOX3Z6G5CHCGSNFHEYVXM3XOJMDS674JZ',
@@ -135,14 +143,16 @@ export async function main() {
         tickAfter: 0,
         transactionHash: 'test-tx-2',
       },
-    ],
-  });
-  spinner.stop(true, 'Swaps seeded   (2 records)');
+    ];
 
-  // ── Price candles ─────────────────────────────────────────────────────────
-  spinner.start('Seeding price candles…');
-  await prisma.priceCandle.createMany({
-    data: [
+    await prisma.swap.createMany({
+      data: swapData,
+    });
+    spinner.stop(true, 'Swaps seeded   (2 records)');
+
+    // ── Price candles ────────────────────────────────────────────────────────
+    spinner.start('Seeding price candles…');
+    const priceCandleData: Prisma.PriceCandleCreateManyInput[] = [
       {
         poolId: pool.id,
         open: 1.0,
@@ -153,21 +163,22 @@ export async function main() {
         periodStart: new Date(),
         interval: '1h',
       },
-    ],
-  });
-  spinner.stop(true, 'Price candles seeded (1 record)');
+    ];
 
-  console.log('\nDatabase seeded successfully ✔');
+    await prisma.priceCandle.createMany({
+      data: priceCandleData,
+    });
+    spinner.stop(true, 'Price candles seeded (1 record)');
+
+    console.log('\nDatabase seeded successfully ✔');
+  } finally {
+    await prisma.$disconnect();
+  }
 }
 
 if (require.main === module) {
-  main()
-    .then(async () => {
-      await prisma.$disconnect();
-    })
-    .catch(async (e) => {
-      console.error('\nSeed failed:', e);
-      await prisma.$disconnect();
-      process.exit(1);
-    });
+  main().catch((e) => {
+    console.error('\nSeed failed:', e);
+    process.exit(1);
+  });
 }
