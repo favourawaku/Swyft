@@ -203,7 +203,7 @@ describe("PortfolioPage", () => {
     const PortfolioPage = await importPage();
     render(<PortfolioPage />);
 
-    expect(screen.getByText("You have no active positions yet.")).toBeInTheDocument();
+    expect(screen.getByText("No positions yet.")).toBeInTheDocument();
     expect(screen.getByText("Add liquidity to a pool to get started.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Browse pools" })).toBeInTheDocument();
   });
