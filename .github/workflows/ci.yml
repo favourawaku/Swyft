@@ -89,12 +89,11 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/swyft
 
       - uses: dtolnay/rust-toolchain@stable
-
-      - name: Install system dependencies for stellar-cli
-        run: sudo apt-get update && sudo apt-get install -y libdbus-1-dev pkg-config
+        with:
+          targets: wasm32-unknown-unknown
 
       - name: Install stellar-cli
-        run: cargo install --locked stellar-cli
+        run: cargo install --locked stellar-cli --no-default-features
 
       - name: Build
         run: pnpm build
